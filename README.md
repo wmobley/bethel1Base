@@ -146,6 +146,23 @@ The transformer treats each `devEui` as a separate station and writes one measur
 Within each station, sensor aliases are the metric names, for example `x_deg`, `y_deg`, and `temperature_C`.
 When multiple tilt files are provided, it combines each unit's rows into that unit's `measurements.csv`.
 
+## Admin / one-off scripts
+
+`ops/` holds scripts that operate on this project but are not baked into the container image:
+
+- `ops/register_tapis_actor.py`: creates or updates the `bethel1base-nightly` Tapis actor. Reads Tapis
+  credentials and `TS_AUTHKEY` from `.env`. Pass `--actor-id <id>` to update an existing actor in place
+  (omit to create a new one), and `--run-now` to submit one manual test execution after registering.
+
+  ```bash
+  cd bethel1Base
+  python3 ops/register_tapis_actor.py --actor-id <existing-actor-id>
+  ```
+
+- `ops/audit_db_vs_transformed_flat.py`: audits transformed-flat CSVs in `./data/transformed-flat/` against
+  the Upstream database. Requires `DATABASE_URL` (prompted if unset) and the `pandas`, `sqlalchemy`, and
+  `psycopg` packages.
+
 ## Notes
 
 - `userspace-networking` is used so this can run in a constrained container environment such as a future Tapis actor.

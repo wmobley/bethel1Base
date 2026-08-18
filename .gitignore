@@ -176,6 +176,12 @@ cython_debug/
 # Local fetched/generated logger data
 data/
 
+# macOS
+.DS_Store
+
+# Stray redirected run logs
+/log
+
 # Cursor  
 #  Cursor is an AI-powered code editor.`.cursorignore` specifies files/directories to 
 #  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data

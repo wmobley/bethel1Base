@@ -6,6 +6,7 @@ import csv
 import json
 import os
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -103,7 +104,19 @@ def preflight_station(*, client: UpstreamClient, campaign_id: int, station_id: i
 
 
 def normalize_collectiontime(value: str) -> str:
-    return isoparse(value).isoformat()
+    """Normalize a collectiontime string to a comparable UTC ISO-8601 form.
+
+    Naive values are treated as UTC (bethel1Base writes UTC instants), so a
+    naive CSV value and the API's aware representation of the same instant
+    compare equal during incremental-upload dedupe.
+    """
+    parsed = isoparse(value)
+    if not isinstance(parsed, datetime):
+        # Date-only values carry no timezone; leave as-is.
+        return parsed.isoformat()
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc).isoformat()
 
 
 def latest_collectiontime_from_rows(rows: list[dict[str, str]]) -> str | None:

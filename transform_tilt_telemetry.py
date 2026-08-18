@@ -5,7 +5,10 @@ import argparse
 import csv
 import json
 from collections import OrderedDict
+from datetime import datetime, time, timezone
 from pathlib import Path
+
+from dateutil.parser import isoparse
 
 
 DEVICE_STATIONS: OrderedDict[str, dict[str, object]] = OrderedDict(
@@ -93,6 +96,24 @@ def build_sensors_rows(dev_eui: str) -> list[dict[str, str]]:
     return sensor_rows
 
 
+def _aware_utc_iso(value: str) -> str:
+    """Return an aware UTC ISO-8601 string for a raw time value.
+
+    bethel1Base writes UTC instants; naive source values are assumed UTC so
+    the transformed CSV carries an explicit timezone and is unambiguous to
+    the Upstream API (which stores aware ``TIMESTAMPTZ`` values).
+    """
+    raw = value.strip()
+    if not raw:
+        return ""
+    parsed = isoparse(raw)
+    if not isinstance(parsed, datetime):
+        parsed = datetime.combine(parsed, time.min)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.isoformat()
+
+
 def build_measurements_rows(
     rows: list[dict[str, str]],
     *,
@@ -103,7 +124,7 @@ def build_measurements_rows(
 
     for row in rows:
         measurement_row = {field_name: "" for field_name in FIELD_METADATA}
-        measurement_row["collectiontime"] = row["time_utc"].strip()
+        measurement_row["collectiontime"] = _aware_utc_iso(row["time_utc"])
         measurement_row["Lat_deg"] = str(lat)
         measurement_row["Lon_deg"] = str(lon)
 
